@@ -38,9 +38,8 @@ def register():
         user = User(username=request.form['username'], email=request.form['email'], password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        login_user(user)
-        flash('Account created successfully! Welcome to CloudBox.', 'success')
-        return redirect(url_for('dashboard'))
+        flash('Account created successfully! You can now login.', 'success')
+        return redirect(url_for('login'))
     return render_template('register.html')
 
 @app.route("/login", methods=['GET', 'POST'])
