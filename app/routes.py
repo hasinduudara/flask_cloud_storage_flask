@@ -111,8 +111,15 @@ def reset_request():
 
 If you did not make this request then simply ignore this email.
 '''
-            mail.send(msg)
-            flash('An email has been sent with instructions to reset your password.', 'info')
+            try:
+                mail.send(msg)
+                flash('An email has been sent with instructions to reset your password.', 'info')
+            except Exception as e:
+                print(f"Failed to send email: {str(e)}")
+                flash('Failed to send reset email. Please contact support or try again later.', 'danger')
+                # For development: show detailed error
+                if app.debug:
+                    flash(f'Email error: {str(e)}', 'danger')
         else:
             flash('There is no account with that email.', 'warning')
     return render_template('forgot_password.html')
