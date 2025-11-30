@@ -93,8 +93,10 @@ def dashboard():
                 db.session.add(new_file)
                 db.session.commit()
                 flash('File uploaded successfully!', 'success')
+                return redirect(url_for('dashboard'))
             except Exception as e:
                 flash(f'Upload failed: {str(e)}', 'danger')
+                return redirect(url_for('dashboard'))
 
     files = File.query.filter_by(owner=current_user).all()
     return render_template('dashboard.html', files=files)
