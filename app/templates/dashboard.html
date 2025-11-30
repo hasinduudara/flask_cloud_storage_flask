@@ -15,7 +15,6 @@
             </button>
         </div>
 
-        <!-- File Preview Section -->
         <div id="filePreview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
             <div class="mb-2">
                 <p class="font-semibold text-gray-800"><span id="fileCount"></span> file(s) selected</p>
@@ -24,7 +23,7 @@
             <div id="previewContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4"></div>
         </div>
     </form>
-    <p class="text-sm text-gray-500 mt-2">Supported formats: Images (JPG, PNG), Videos (MP4), Documents (PDF, DOCX, TXT). You can select multiple files at once.</p>
+    <p class="text-sm text-gray-500 mt-2">Supported formats: Images (JPG, PNG), Videos (MP4), Documents (PDF, DOCX, TXT).</p>
 </div>
 
 <script>
@@ -36,73 +35,51 @@
 
     fileInput.addEventListener('change', function(e) {
         const files = e.target.files;
-
         if (!files || files.length === 0) {
             filePreview.classList.add('hidden');
             return;
         }
-
-        // Show preview section
         filePreview.classList.remove('hidden');
-
-        // Display file count and total size
         fileCount.textContent = files.length;
         let totalBytes = 0;
         for (let i = 0; i < files.length; i++) {
             totalBytes += files[i].size;
         }
         totalSize.textContent = `Total size: ${formatFileSize(totalBytes)}`;
-
-        // Clear previous previews
         previewContainer.innerHTML = '';
-
-        // Create preview for each file
         Array.from(files).forEach(file => {
             const fileCard = document.createElement('div');
             fileCard.className = 'bg-white p-2 rounded border border-gray-300 flex flex-col items-center';
-
-            // Create preview based on file type
             if (file.type.startsWith('image/')) {
                 const img = document.createElement('img');
                 img.className = 'w-20 h-20 object-cover rounded mb-2';
                 img.src = URL.createObjectURL(file);
-                img.onload = function() {
-                    URL.revokeObjectURL(this.src);
-                };
+                img.onload = function() { URL.revokeObjectURL(this.src); };
                 fileCard.appendChild(img);
             } else if (file.type.startsWith('video/')) {
                 const video = document.createElement('video');
                 video.className = 'w-20 h-20 object-cover rounded mb-2';
                 video.src = URL.createObjectURL(file);
-                video.onload = function() {
-                    URL.revokeObjectURL(this.src);
-                };
+                video.onload = function() { URL.revokeObjectURL(this.src); };
                 fileCard.appendChild(video);
             } else {
-                // For documents and other files, show an icon
                 const icon = document.createElement('div');
                 icon.className = 'w-20 h-20 flex items-center justify-center bg-gray-100 rounded mb-2';
                 icon.innerHTML = '<span class="text-3xl">📄</span>';
                 fileCard.appendChild(icon);
             }
-
-            // Add file name
             const fileName = document.createElement('p');
             fileName.className = 'text-xs text-gray-700 text-center truncate w-full px-1';
             fileName.textContent = file.name;
-            fileName.title = file.name; // Show full name on hover
+            fileName.title = file.name;
             fileCard.appendChild(fileName);
-
-            // Add file size
             const fileSize = document.createElement('p');
             fileSize.className = 'text-xs text-gray-500 text-center';
             fileSize.textContent = formatFileSize(file.size);
             fileCard.appendChild(fileSize);
-
             previewContainer.appendChild(fileCard);
         });
     });
-
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -118,24 +95,50 @@
     {% for file in files %}
     <div class="bg-white p-4 rounded-lg shadow hover:shadow-xl transition duration-300 flex flex-col justify-between">
 
-        <div
-            class="h-40 bg-gray-100 mb-3 flex items-center justify-center overflow-hidden rounded relative border border-gray-200">
-            {% if file.file_type == 'image' %}
-            <img src="{{ file.url }}" class="object-cover w-full h-full hover:scale-105 transition duration-500">
+        <div class="h-40 bg-gray-50 mb-3 flex items-center justify-center overflow-hidden rounded relative border border-gray-200 group">
 
+            {# Extract extension #}
+            {% set ext = file.filename.split('.')[-1].lower() %}
+
+            {# --- UPDATED LOGIC ORDER --- #}
+
+            {# 1. Check for Documents FIRST #}
+            {% if ext == 'pdf' %}
+                 <div class="flex flex-col items-center justify-center transition duration-300 group-hover:scale-110">
+                    <svg class="w-16 h-16 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    <span class="text-xs font-bold text-red-500 mt-2 uppercase">PDF</span>
+                 </div>
+
+            {% elif ext in ['doc', 'docx'] %}
+                <div class="flex flex-col items-center justify-center transition duration-300 group-hover:scale-110">
+                    <svg class="w-16 h-16 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path><path d="M7 8h6v2H7V8zm0 4h6v2H7v-2z" fill="white"></path></svg>
+                    <span class="text-xs font-bold text-blue-600 mt-2 uppercase">Word</span>
+                </div>
+
+            {% elif ext in ['txt'] %}
+                <div class="flex flex-col items-center justify-center transition duration-300 group-hover:scale-110">
+                    <svg class="w-16 h-16 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                    <span class="text-xs font-bold text-gray-500 mt-2 uppercase">TXT</span>
+                </div>
+
+            {# 2. Check for Images #}
+            {% elif file.file_type == 'image' %}
+                <img src="{{ file.url }}" class="object-cover w-full h-full hover:scale-105 transition duration-500">
+
+            {# 3. Check for Videos #}
             {% elif file.file_type == 'video' %}
-            <video src="{{ file.url }}" class="w-full h-full object-cover" controls preload="metadata"></video>
+                <video src="{{ file.url }}" class="w-full h-full object-cover" controls preload="metadata"></video>
 
+            {# 4. Fallback for others #}
             {% else %}
-            <div class="text-center">
-                <span class="text-5xl">📄</span>
-                <p class="text-xs mt-2 text-gray-500 font-mono uppercase">{{ file.filename.split('.')[-1] }}</p>
-            </div>
+                <div class="text-center">
+                    <span class="text-5xl">📄</span>
+                    <p class="text-xs mt-2 text-gray-500 font-mono uppercase">{{ ext }}</p>
+                </div>
             {% endif %}
         </div>
 
         <div class="flex justify-between items-center mt-2">
-
             <div class="truncate w-2/3 pr-2">
                 <p class="font-bold text-gray-800 text-sm truncate" title="{{ file.filename }}">
                     {{ file.filename }}
@@ -163,7 +166,6 @@
                     </svg>
                 </button>
             </form>
-
         </div>
     </div>
     {% else %}
