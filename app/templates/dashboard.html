@@ -4,18 +4,95 @@
 <div class="bg-white p-6 rounded-lg shadow-md mb-8">
     <h2 class="text-2xl font-bold mb-4 text-gray-800">Upload File</h2>
 
-    <form method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-4 items-center">
-        <input type="file" name="file"
-            class="border border-gray-300 p-2 rounded w-full sm:flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
-            required>
-        <button type="submit"
-            class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition duration-200">
-            Upload to Cloud
-        </button>
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
+        <div class="flex flex-col sm:flex-row gap-4 items-center">
+            <input type="file" name="file" id="fileInput"
+                class="border border-gray-300 p-2 rounded w-full sm:flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required>
+            <button type="submit"
+                class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition duration-200">
+                Upload to Cloud
+            </button>
+        </div>
+
+        <!-- File Preview Section -->
+        <div id="filePreview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+            <div class="flex items-start gap-4">
+                <div id="previewContainer" class="flex-shrink-0"></div>
+                <div id="fileInfo" class="flex-grow">
+                    <p class="font-semibold text-gray-800" id="fileName"></p>
+                    <p class="text-sm text-gray-600" id="fileSize"></p>
+                    <p class="text-sm text-gray-600" id="fileType"></p>
+                </div>
+            </div>
+        </div>
     </form>
     <p class="text-sm text-gray-500 mt-2">Supported formats: Images (JPG, PNG), Videos (MP4), Documents (PDF, DOCX,
         TXT).</p>
 </div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const filePreview = document.getElementById('filePreview');
+    const previewContainer = document.getElementById('previewContainer');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const fileType = document.getElementById('fileType');
+
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+
+        if (!file) {
+            filePreview.classList.add('hidden');
+            return;
+        }
+
+        // Show preview section
+        filePreview.classList.remove('hidden');
+
+        // Display file info
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileType.textContent = `Type: ${file.type || 'Unknown'}`;
+
+        // Clear previous preview
+        previewContainer.innerHTML = '';
+
+        // Create preview based on file type
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.className = 'w-32 h-32 object-cover rounded border-2 border-gray-300';
+            img.src = URL.createObjectURL(file);
+            img.onload = function() {
+                URL.revokeObjectURL(this.src);
+            };
+            previewContainer.appendChild(img);
+        } else if (file.type.startsWith('video/')) {
+            const video = document.createElement('video');
+            video.className = 'w-32 h-32 object-cover rounded border-2 border-gray-300';
+            video.controls = true;
+            video.src = URL.createObjectURL(file);
+            video.onload = function() {
+                URL.revokeObjectURL(this.src);
+            };
+            previewContainer.appendChild(video);
+        } else {
+            // For documents and other files, show an icon
+            const icon = document.createElement('div');
+            icon.className = 'w-32 h-32 flex items-center justify-center bg-gray-200 rounded border-2 border-gray-300';
+            icon.innerHTML = '<span class="text-5xl">📄</span>';
+            previewContainer.appendChild(icon);
+        }
+    });
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+</script>
 
 <div class="mb-4 text-gray-700 font-semibold text-lg">Your Files</div>
 
