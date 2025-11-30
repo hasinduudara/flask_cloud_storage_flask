@@ -5,6 +5,9 @@ from flask_login import login_user, current_user, logout_user, login_required
 from flask_mail import Message
 import cloudinary.uploader
 from sqlalchemy import inspect, text
+import random
+from datetime import datetime, timedelta
+from flask import session
 
 # Create DB Tables automatically
 with app.app_context():
@@ -35,8 +38,9 @@ def register():
         user = User(username=request.form['username'], email=request.form['email'], password=hashed_password)
         db.session.add(user)
         db.session.commit()
-        flash('Account created! You can now login.', 'success')
-        return redirect(url_for('login'))
+        login_user(user)
+        flash('Account created successfully! Welcome to CloudBox.', 'success')
+        return redirect(url_for('dashboard'))
     return render_template('register.html')
 
 @app.route("/login", methods=['GET', 'POST'])
@@ -95,50 +99,103 @@ def dashboard():
     files = File.query.filter_by(owner=current_user).all()
     return render_template('dashboard.html', files=files)
 
-@app.route("/reset_password", methods=['GET', 'POST'])
-def reset_request():
+
+@app.route("/forgot_password", methods=['GET', 'POST'])
+def forgot_password():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
-    if request.method == 'POST':
-        user = User.query.filter_by(email=request.form['email']).first()
-        if user:
-            token = user.get_reset_token()
-            msg = Message('Password Reset Request', sender='noreply@demo.com', recipients=[user.email])
-            # _external=True ensures we get the full http://... link
-            link = url_for('reset_token', token=token, _external=True)
-            msg.body = f'''To reset your password, visit the following link:
-{link}
 
-If you did not make this request then simply ignore this email.
-'''
+    if request.method == 'POST':
+        email = request.form['email']
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # Generate 6-digit OTP
+            otp = str(random.randint(100000, 999999))
+
+            # Save OTP and Expiration (Now + 2 minutes) to DB
+            user.otp_secret = otp
+            user.otp_expiry = datetime.utcnow() + timedelta(minutes=2)
+            db.session.commit()
+
+            # Send Email
+            msg = Message('Password Reset OTP', sender='noreply@demo.com', recipients=[user.email])
+            msg.body = f'''Your OTP for password reset is: {otp} This code expires in 2 minutes.
+            If you did not request this, please ignore this email.
+            '''
             try:
                 mail.send(msg)
-                flash('An email has been sent with instructions to reset your password.', 'info')
+                # Store email in session to use in next step
+                session['reset_email'] = email
+                flash('OTP sent to your email. It expires in 2 minutes.', 'info')
+                return redirect(url_for('verify_otp'))
             except Exception as e:
-                print(f"Failed to send email: {str(e)}")
-                flash('Failed to send reset email. Please contact support or try again later.', 'danger')
-                # For development: show detailed error
-                if app.debug:
-                    flash(f'Email error: {str(e)}', 'danger')
+                flash('Error sending email. Try again.', 'danger')
         else:
-            flash('There is no account with that email.', 'warning')
+            flash('No account found with that email.', 'warning')
+
     return render_template('forgot_password.html')
 
-@app.route("/reset_password/<token>", methods=['GET', 'POST'])
-def reset_token(token):
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    user = User.verify_reset_token(token)
-    if user is None:
-        flash('That is an invalid or expired token', 'warning')
-        return redirect(url_for('reset_request'))
+
+# 2. PAGE TO ENTER OTP
+@app.route("/verify_otp", methods=['GET', 'POST'])
+def verify_otp():
+    if 'reset_email' not in session:
+        return redirect(url_for('forgot_password'))
+
     if request.method == 'POST':
-        hashed_password = bcrypt.generate_password_hash(request.form['password']).decode('utf-8')
-        user.password = hashed_password
-        db.session.commit()
-        flash('Your password has been updated! You can now login', 'success')
-        return redirect(url_for('login'))
-    return render_template('reset_token.html')
+        otp_input = request.form['otp']
+        email = session['reset_email']
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # Check 1: Is OTP correct?
+            if user.otp_secret != otp_input:
+                flash('Invalid OTP. Please try again.', 'danger')
+            # Check 2: Is OTP expired?
+            elif user.otp_expiry < datetime.utcnow():
+                flash('OTP has expired. Please request a new one.', 'warning')
+                return redirect(url_for('forgot_password'))
+            else:
+                # Success! Allow password reset
+                session['otp_verified'] = True
+                return redirect(url_for('reset_new_password'))
+        else:
+            flash('User not found.', 'danger')
+
+    return render_template('verify_otp.html')
+
+
+# 3. PAGE TO SET NEW PASSWORD
+@app.route("/reset_new_password", methods=['GET', 'POST'])
+def reset_new_password():
+    # Security: Make sure they actually verified the OTP
+    if 'otp_verified' not in session or not session['otp_verified']:
+        return redirect(url_for('forgot_password'))
+
+    if request.method == 'POST':
+        password = request.form['password']
+        email = session['reset_email']
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            # Hash new password
+            hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+            user.password = hashed_password
+
+            # Clear OTP fields for security
+            user.otp_secret = None
+            user.otp_expiry = None
+            db.session.commit()
+
+            # Clear session
+            session.pop('reset_email', None)
+            session.pop('otp_verified', None)
+
+            flash('Your password has been updated! You can now login.', 'success')
+            return redirect(url_for('login'))
+
+    return render_template('reset_token.html')  # Reusing your existing template
 
 @app.route("/delete/<int:file_id>", methods=['POST'])
 @login_required

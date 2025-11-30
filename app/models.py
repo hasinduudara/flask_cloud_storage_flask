@@ -1,6 +1,6 @@
 from app import db, login_manager, app
 from flask_login import UserMixin
-from itsdangerous import URLSafeTimedSerializer as Serializer
+from datetime import datetime
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -11,20 +11,10 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(60), nullable=False)
+    otp_secret = db.Column(db.String(6), nullable=True)
+    otp_expiry = db.Column(db.DateTime, nullable=True)
+
     files = db.relationship('File', backref='owner', lazy=True)
-
-    def get_reset_token(self):
-        s = Serializer(app.config['SECRET_KEY'])
-        return s.dumps(self.email, salt='password-reset-salt')
-
-    @staticmethod
-    def verify_reset_token(token, expires_sec=1800):
-        s = Serializer(app.config['SECRET_KEY'])
-        try:
-            email = s.loads(token, salt='password-reset-salt', max_age=expires_sec)
-        except:
-            return None
-        return User.query.filter_by(email=email).first()
 
 class File(db.Model):
     id = db.Column(db.Integer, primary_key=True)
