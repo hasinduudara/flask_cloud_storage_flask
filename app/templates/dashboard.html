@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="bg-white p-6 rounded-lg shadow-md mb-8">
+    <h2 class="text-2xl font-bold mb-4 text-gray-800">Upload File</h2>
+
+    <form method="POST" enctype="multipart/form-data" class="flex flex-col sm:flex-row gap-4 items-center">
+        <input type="file" name="file"
+            class="border border-gray-300 p-2 rounded w-full sm:flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
+            required>
+        <button type="submit"
+            class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition duration-200">
+            Upload to Cloud
+        </button>
+    </form>
+    <p class="text-sm text-gray-500 mt-2">Supported formats: Images (JPG, PNG), Videos (MP4), Documents (PDF, DOCX,
+        TXT).</p>
+</div>
+
+<div class="mb-4 text-gray-700 font-semibold text-lg">Your Files</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    {% for file in files %}
+    <div class="bg-white p-4 rounded-lg shadow hover:shadow-xl transition duration-300 flex flex-col justify-between">
+
+        <div
+            class="h-40 bg-gray-100 mb-3 flex items-center justify-center overflow-hidden rounded relative border border-gray-200">
+            {% if file.file_type == 'image' %}
+            <img src="{{ file.url }}" class="object-cover w-full h-full hover:scale-105 transition duration-500">
+
+            {% elif file.file_type == 'video' %}
+            <video src="{{ file.url }}" class="w-full h-full object-cover" controls preload="metadata"></video>
+
+            {% else %}
+            <div class="text-center">
+                <span class="text-5xl">📄</span>
+                <p class="text-xs mt-2 text-gray-500 font-mono uppercase">{{ file.filename.split('.')[-1] }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="flex justify-between items-center mt-2">
+
+            <div class="truncate w-2/3 pr-2">
+                <p class="font-bold text-gray-800 text-sm truncate" title="{{ file.filename }}">
+                    {{ file.filename }}
+                </p>
+                <a href="{{ file.url }}" target="_blank"
+                    class="text-blue-500 text-xs hover:underline flex items-center gap-1 mt-1">
+                    Download
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                </a>
+            </div>
+
+            <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST"
+                onsubmit="return confirm('Are you sure you want to permanently delete this file?');">
+                <button type="submit"
+                    class="bg-red-50 text-red-600 p-2 rounded-full hover:bg-red-600 hover:text-white transition duration-200"
+                    title="Delete File">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </button>
+            </form>
+
+        </div>
+    </div>
+    {% else %}
+    <div class="col-span-full text-center py-12 text-gray-500">
+        <p class="text-xl">No files uploaded yet.</p>
+        <p class="text-sm">Use the form above to add your first file.</p>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

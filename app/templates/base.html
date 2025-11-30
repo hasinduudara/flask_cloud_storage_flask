@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Cloud Storage</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-gray-100 min-h-screen">
+    <nav class="bg-white shadow p-4 mb-6">
+      <div class="container mx-auto flex justify-between items-center">
+        <a
+          href="{{ url_for('dashboard') }}"
+          class="text-xl font-bold text-blue-600"
+          >CloudBox</a
+        >
+        <div>
+          {% if current_user.is_authenticated %}
+          <span class="mr-4 text-gray-600"
+            >Hi, {{ current_user.username }}</span
+          >
+          <a
+            href="{{ url_for('logout') }}"
+            class="text-red-500 hover:text-red-700"
+            >Logout</a
+          >
+          {% else %}
+          <a
+            href="{{ url_for('login') }}"
+            class="mr-4 text-gray-600 hover:text-blue-500"
+            >Login</a
+          >
+          <a
+            href="{{ url_for('register') }}"
+            class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+            >Register</a
+          >
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <div class="container mx-auto px-4">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div
+        class="mb-4 p-4 rounded text-white {{ 'bg-green-500' if category=='success' else 'bg-red-500' if category=='danger' else 'bg-blue-500' }}"
+      >
+        {{ message }}
+      </div>
+      {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>
