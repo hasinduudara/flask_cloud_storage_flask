@@ -65,16 +65,23 @@ def logout():
 @login_required
 def dashboard():
     if request.method == 'POST':
-        if 'file' not in request.files:
+        if 'files' not in request.files:
             flash('No file part', 'danger')
-            return redirect(request.url)
-        
-        file_to_upload = request.files['file']
-        if file_to_upload.filename == '':
-            flash('No selected file', 'danger')
-            return redirect(request.url)
+            return redirect(url_for('dashboard'))
 
-        if file_to_upload:
+        files_to_upload = request.files.getlist('files')
+
+        if not files_to_upload or all(f.filename == '' for f in files_to_upload):
+            flash('No selected file', 'danger')
+            return redirect(url_for('dashboard'))
+
+        uploaded_count = 0
+        failed_count = 0
+
+        for file_to_upload in files_to_upload:
+            if file_to_upload.filename == '':
+                continue
+
             try:
                 # Cloudinary "auto" detects image/video/raw
                 upload_result = cloudinary.uploader.upload(
@@ -86,17 +93,28 @@ def dashboard():
                 new_file = File(
                     filename=file_to_upload.filename,
                     url=upload_result['secure_url'],
-                    public_id=upload_result.get('public_id'),  # ensure we store public_id
+                    public_id=upload_result.get('public_id'),
                     file_type=upload_result['resource_type'],
                     owner=current_user
                 )
                 db.session.add(new_file)
-                db.session.commit()
-                flash('File uploaded successfully!', 'success')
-                return redirect(url_for('dashboard'))
+                uploaded_count += 1
             except Exception as e:
-                flash(f'Upload failed: {str(e)}', 'danger')
-                return redirect(url_for('dashboard'))
+                failed_count += 1
+                print(f"Failed to upload {file_to_upload.filename}: {str(e)}")
+
+        # Commit all successful uploads
+        db.session.commit()
+
+        # Show appropriate flash message
+        if uploaded_count > 0 and failed_count == 0:
+            flash(f'{uploaded_count} file(s) uploaded successfully!', 'success')
+        elif uploaded_count > 0 and failed_count > 0:
+            flash(f'{uploaded_count} file(s) uploaded, {failed_count} failed.', 'info')
+        else:
+            flash('All uploads failed. Please try again.', 'danger')
+
+        return redirect(url_for('dashboard'))
 
     files = File.query.filter_by(owner=current_user).all()
     return render_template('dashboard.html', files=files)

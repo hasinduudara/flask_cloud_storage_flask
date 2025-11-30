@@ -2,11 +2,11 @@
 {% block content %}
 
 <div class="bg-white p-6 rounded-lg shadow-md mb-8">
-    <h2 class="text-2xl font-bold mb-4 text-gray-800">Upload File</h2>
+    <h2 class="text-2xl font-bold mb-4 text-gray-800">Upload Files</h2>
 
     <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
         <div class="flex flex-col sm:flex-row gap-4 items-center">
-            <input type="file" name="file" id="fileInput"
+            <input type="file" name="files" id="fileInput" multiple
                 class="border border-gray-300 p-2 rounded w-full sm:flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
                 required>
             <button type="submit"
@@ -17,32 +17,27 @@
 
         <!-- File Preview Section -->
         <div id="filePreview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <div class="flex items-start gap-4">
-                <div id="previewContainer" class="flex-shrink-0"></div>
-                <div id="fileInfo" class="flex-grow">
-                    <p class="font-semibold text-gray-800" id="fileName"></p>
-                    <p class="text-sm text-gray-600" id="fileSize"></p>
-                    <p class="text-sm text-gray-600" id="fileType"></p>
-                </div>
+            <div class="mb-2">
+                <p class="font-semibold text-gray-800"><span id="fileCount"></span> file(s) selected</p>
+                <p class="text-sm text-gray-600" id="totalSize"></p>
             </div>
+            <div id="previewContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4"></div>
         </div>
     </form>
-    <p class="text-sm text-gray-500 mt-2">Supported formats: Images (JPG, PNG), Videos (MP4), Documents (PDF, DOCX,
-        TXT).</p>
+    <p class="text-sm text-gray-500 mt-2">Supported formats: Images (JPG, PNG), Videos (MP4), Documents (PDF, DOCX, TXT). You can select multiple files at once.</p>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
     const filePreview = document.getElementById('filePreview');
     const previewContainer = document.getElementById('previewContainer');
-    const fileName = document.getElementById('fileName');
-    const fileSize = document.getElementById('fileSize');
-    const fileType = document.getElementById('fileType');
+    const fileCount = document.getElementById('fileCount');
+    const totalSize = document.getElementById('totalSize');
 
     fileInput.addEventListener('change', function(e) {
-        const file = e.target.files[0];
+        const files = e.target.files;
 
-        if (!file) {
+        if (!files || files.length === 0) {
             filePreview.classList.add('hidden');
             return;
         }
@@ -50,39 +45,62 @@
         // Show preview section
         filePreview.classList.remove('hidden');
 
-        // Display file info
-        fileName.textContent = file.name;
-        fileSize.textContent = formatFileSize(file.size);
-        fileType.textContent = `Type: ${file.type || 'Unknown'}`;
+        // Display file count and total size
+        fileCount.textContent = files.length;
+        let totalBytes = 0;
+        for (let i = 0; i < files.length; i++) {
+            totalBytes += files[i].size;
+        }
+        totalSize.textContent = `Total size: ${formatFileSize(totalBytes)}`;
 
-        // Clear previous preview
+        // Clear previous previews
         previewContainer.innerHTML = '';
 
-        // Create preview based on file type
-        if (file.type.startsWith('image/')) {
-            const img = document.createElement('img');
-            img.className = 'w-32 h-32 object-cover rounded border-2 border-gray-300';
-            img.src = URL.createObjectURL(file);
-            img.onload = function() {
-                URL.revokeObjectURL(this.src);
-            };
-            previewContainer.appendChild(img);
-        } else if (file.type.startsWith('video/')) {
-            const video = document.createElement('video');
-            video.className = 'w-32 h-32 object-cover rounded border-2 border-gray-300';
-            video.controls = true;
-            video.src = URL.createObjectURL(file);
-            video.onload = function() {
-                URL.revokeObjectURL(this.src);
-            };
-            previewContainer.appendChild(video);
-        } else {
-            // For documents and other files, show an icon
-            const icon = document.createElement('div');
-            icon.className = 'w-32 h-32 flex items-center justify-center bg-gray-200 rounded border-2 border-gray-300';
-            icon.innerHTML = '<span class="text-5xl">📄</span>';
-            previewContainer.appendChild(icon);
-        }
+        // Create preview for each file
+        Array.from(files).forEach(file => {
+            const fileCard = document.createElement('div');
+            fileCard.className = 'bg-white p-2 rounded border border-gray-300 flex flex-col items-center';
+
+            // Create preview based on file type
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.className = 'w-20 h-20 object-cover rounded mb-2';
+                img.src = URL.createObjectURL(file);
+                img.onload = function() {
+                    URL.revokeObjectURL(this.src);
+                };
+                fileCard.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.className = 'w-20 h-20 object-cover rounded mb-2';
+                video.src = URL.createObjectURL(file);
+                video.onload = function() {
+                    URL.revokeObjectURL(this.src);
+                };
+                fileCard.appendChild(video);
+            } else {
+                // For documents and other files, show an icon
+                const icon = document.createElement('div');
+                icon.className = 'w-20 h-20 flex items-center justify-center bg-gray-100 rounded mb-2';
+                icon.innerHTML = '<span class="text-3xl">📄</span>';
+                fileCard.appendChild(icon);
+            }
+
+            // Add file name
+            const fileName = document.createElement('p');
+            fileName.className = 'text-xs text-gray-700 text-center truncate w-full px-1';
+            fileName.textContent = file.name;
+            fileName.title = file.name; // Show full name on hover
+            fileCard.appendChild(fileName);
+
+            // Add file size
+            const fileSize = document.createElement('p');
+            fileSize.className = 'text-xs text-gray-500 text-center';
+            fileSize.textContent = formatFileSize(file.size);
+            fileCard.appendChild(fileSize);
+
+            previewContainer.appendChild(fileCard);
+        });
     });
 
     function formatFileSize(bytes) {
