@@ -1,29 +1,133 @@
 {% extends "base.html" %}
 {% block content %}
 
-<div class="bg-white p-6 rounded-lg shadow-md mb-8">
-    <h2 class="text-2xl font-bold mb-4 text-gray-800">Upload Files</h2>
+<div class="max-w-7xl mx-auto">
 
-    <form method="POST" enctype="multipart/form-data" class="flex flex-col gap-4">
-        <div class="flex flex-col sm:flex-row gap-4 items-center">
-            <input type="file" name="files" id="fileInput" multiple
-                class="border border-gray-300 p-2 rounded w-full sm:flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500"
-                required>
-            <button type="submit"
-                class="w-full sm:w-auto bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 transition duration-200">
-                Upload to Cloud
-            </button>
+    <div class="mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-gray-900">My Storage</h1>
+            <p class="text-sm text-gray-500">Manage your files securely.</p>
         </div>
+        <div class="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            {{ files|length }} Files Uploaded
+        </div>
+    </div>
 
-        <div id="filePreview" class="hidden mt-4 p-4 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-            <div class="mb-2">
-                <p class="font-semibold text-gray-800"><span id="fileCount"></span> file(s) selected</p>
-                <p class="text-sm text-gray-600" id="totalSize"></p>
+    <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 mb-10">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="relative group">
+                <div class="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-blue-500 hover:bg-blue-50/50 transition duration-300 cursor-pointer group-hover:border-blue-500 relative">
+
+                    <div class="mx-auto h-12 w-12 text-gray-400 group-hover:text-blue-500 transition duration-300 mb-4">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                    </div>
+
+                    <p class="text-base text-gray-700 font-medium">
+                        <span class="text-blue-600">Click to upload</span> or drag and drop
+                    </p>
+                    <p class="text-sm text-gray-500 mt-1">SVG, PNG, JPG, MP4 or PDF</p>
+
+                    <input type="file" name="files" id="fileInput" multiple
+                        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" required>
+                </div>
             </div>
-            <div id="previewContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4"></div>
+
+            <div class="mt-6 flex justify-end">
+                <button type="submit"
+                    class="bg-blue-600 text-white px-8 py-2.5 rounded-lg font-semibold shadow-md hover:bg-blue-700 hover:shadow-lg transition transform hover:-translate-y-0.5 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    Start Upload
+                </button>
+            </div>
+
+            <div id="filePreview" class="hidden mt-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-gray-700">Selected Files (<span id="fileCount">0</span>)</h3>
+                    <span id="totalSize" class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded"></span>
+                </div>
+                <div id="previewContainer" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-4"></div>
+            </div>
+        </form>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {% for file in files %}
+        <div class="group bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden">
+
+            <div class="relative h-48 bg-gray-50 flex items-center justify-center overflow-hidden">
+                {# Extract extension #}
+                {% set ext = file.filename.split('.')[-1].lower() %}
+
+                {# Overlay Gradient on Hover #}
+                <div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition duration-300 z-10"></div>
+
+                {# --- LOGIC: DOCS > IMAGES > VIDEO --- #}
+                {% if ext == 'pdf' %}
+                    <div class="transform group-hover:scale-110 transition duration-300 flex flex-col items-center">
+                        <svg class="w-16 h-16 text-red-500 drop-shadow-md" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                        <span class="text-xs font-bold text-gray-400 mt-2 tracking-wider">PDF</span>
+                    </div>
+                {% elif ext in ['doc', 'docx'] %}
+                    <div class="transform group-hover:scale-110 transition duration-300 flex flex-col items-center">
+                        <svg class="w-16 h-16 text-blue-600 drop-shadow-md" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path><path d="M7 8h6v2H7V8zm0 4h6v2H7v-2z" fill="white"></path></svg>
+                        <span class="text-xs font-bold text-gray-400 mt-2 tracking-wider">DOC</span>
+                    </div>
+                {% elif ext in ['txt'] %}
+                    <div class="transform group-hover:scale-110 transition duration-300 flex flex-col items-center">
+                        <svg class="w-16 h-16 text-gray-500 drop-shadow-md" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
+                        <span class="text-xs font-bold text-gray-400 mt-2 tracking-wider">TXT</span>
+                    </div>
+                {% elif file.file_type == 'image' %}
+                    <img src="{{ file.url }}" class="w-full h-full object-cover transform group-hover:scale-105 transition duration-500">
+                {% elif file.file_type == 'video' %}
+                    <video src="{{ file.url }}" class="w-full h-full object-cover opacity-90" controls preload="metadata"></video>
+                    <div class="absolute pointer-events-none inset-0 flex items-center justify-center">
+                        <div class="bg-white/30 backdrop-blur-sm p-2 rounded-full">
+                            <svg class="w-8 h-8 text-white drop-shadow-lg" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center">
+                        <span class="text-5xl">📄</span>
+                        <p class="text-xs mt-2 text-gray-500 font-mono uppercase">{{ ext }}</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="p-4 flex-grow border-t border-gray-100">
+                <h3 class="text-sm font-bold text-gray-800 truncate mb-1" title="{{ file.filename }}">
+                    {{ file.filename }}
+                </h3>
+                <p class="text-xs text-gray-400 uppercase font-semibold tracking-wide">{{ ext }} File</p>
+            </div>
+
+            <div class="grid grid-cols-3 border-t border-gray-100 divide-x divide-gray-100 bg-gray-50/50">
+
+                <a href="{{ file.url }}" target="_blank" class="flex items-center justify-center py-3 text-gray-500 hover:text-blue-600 hover:bg-white transition" title="View">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                </a>
+
+                <a href="{{ file.url }}" download="{{ file.filename }}" class="flex items-center justify-center py-3 text-gray-500 hover:text-green-600 hover:bg-white transition" title="Download">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                </a>
+
+                <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST" onsubmit="return confirm('Permanently delete this file?');" class="flex items-stretch">
+                    <button type="submit" class="w-full flex items-center justify-center py-3 text-gray-500 hover:text-red-600 hover:bg-white transition" title="Delete">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                </form>
+            </div>
         </div>
-    </form>
-    <p class="text-sm text-gray-500 mt-2">Supported formats: Images (JPG, PNG), Videos (MP4), Documents (PDF, DOCX, TXT).</p>
+        {% else %}
+        <div class="col-span-full py-16 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No files yet</h3>
+            <p class="mt-1 text-sm text-gray-500">Upload documents, photos, or videos to get started.</p>
+        </div>
+        {% endfor %}
+    </div>
+
 </div>
 
 <script>
@@ -45,41 +149,41 @@
         for (let i = 0; i < files.length; i++) {
             totalBytes += files[i].size;
         }
-        totalSize.textContent = `Total size: ${formatFileSize(totalBytes)}`;
+        totalSize.textContent = formatFileSize(totalBytes);
         previewContainer.innerHTML = '';
+
         Array.from(files).forEach(file => {
             const fileCard = document.createElement('div');
-            fileCard.className = 'bg-white p-2 rounded border border-gray-300 flex flex-col items-center';
+            // Updated classes for script preview
+            fileCard.className = 'relative group bg-gray-50 rounded-lg p-2 border border-gray-200 flex flex-col items-center justify-center';
+
             if (file.type.startsWith('image/')) {
                 const img = document.createElement('img');
-                img.className = 'w-20 h-20 object-cover rounded mb-2';
+                img.className = 'w-16 h-16 object-cover rounded-md mb-2 shadow-sm';
                 img.src = URL.createObjectURL(file);
                 img.onload = function() { URL.revokeObjectURL(this.src); };
                 fileCard.appendChild(img);
             } else if (file.type.startsWith('video/')) {
                 const video = document.createElement('video');
-                video.className = 'w-20 h-20 object-cover rounded mb-2';
+                video.className = 'w-16 h-16 object-cover rounded-md mb-2 shadow-sm';
                 video.src = URL.createObjectURL(file);
-                video.onload = function() { URL.revokeObjectURL(this.src); };
                 fileCard.appendChild(video);
             } else {
                 const icon = document.createElement('div');
-                icon.className = 'w-20 h-20 flex items-center justify-center bg-gray-100 rounded mb-2';
-                icon.innerHTML = '<span class="text-3xl">📄</span>';
+                icon.className = 'w-16 h-16 flex items-center justify-center bg-white rounded-md mb-2 shadow-sm text-gray-400';
+                icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>';
                 fileCard.appendChild(icon);
             }
+
             const fileName = document.createElement('p');
-            fileName.className = 'text-xs text-gray-700 text-center truncate w-full px-1';
+            fileName.className = 'text-xs text-gray-700 w-full truncate text-center font-medium';
             fileName.textContent = file.name;
-            fileName.title = file.name;
             fileCard.appendChild(fileName);
-            const fileSize = document.createElement('p');
-            fileSize.className = 'text-xs text-gray-500 text-center';
-            fileSize.textContent = formatFileSize(file.size);
-            fileCard.appendChild(fileSize);
+
             previewContainer.appendChild(fileCard);
         });
     });
+
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -88,109 +192,4 @@
         return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     }
 </script>
-
-<div class="mb-4 text-gray-700 font-semibold text-lg">Your Files</div>
-
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-    {% for file in files %}
-    <div class="bg-white p-4 rounded-lg shadow hover:shadow-xl transition duration-300 flex flex-col justify-between">
-
-        <div class="h-40 bg-gray-50 mb-3 flex items-center justify-center overflow-hidden rounded relative border border-gray-200 group">
-
-            {# Extract extension #}
-            {% set ext = file.filename.split('.')[-1].lower() %}
-
-            {# --- UPDATED LOGIC ORDER --- #}
-
-            {# 1. Check for Documents FIRST #}
-            {% if ext == 'pdf' %}
-                 <div class="flex flex-col items-center justify-center transition duration-300 group-hover:scale-110">
-                    <svg class="w-16 h-16 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
-                    <span class="text-xs font-bold text-red-500 mt-2 uppercase">PDF</span>
-                 </div>
-
-            {% elif ext in ['doc', 'docx'] %}
-                <div class="flex flex-col items-center justify-center transition duration-300 group-hover:scale-110">
-                    <svg class="w-16 h-16 text-blue-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" clip-rule="evenodd"></path><path d="M7 8h6v2H7V8zm0 4h6v2H7v-2z" fill="white"></path></svg>
-                    <span class="text-xs font-bold text-blue-600 mt-2 uppercase">Word</span>
-                </div>
-
-            {% elif ext in ['txt'] %}
-                <div class="flex flex-col items-center justify-center transition duration-300 group-hover:scale-110">
-                    <svg class="w-16 h-16 text-gray-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"></path></svg>
-                    <span class="text-xs font-bold text-gray-500 mt-2 uppercase">TXT</span>
-                </div>
-
-            {# 2. Check for Images #}
-            {% elif file.file_type == 'image' %}
-                <img src="{{ file.url }}" class="object-cover w-full h-full hover:scale-105 transition duration-500">
-
-            {# 3. Check for Videos #}
-            {% elif file.file_type == 'video' %}
-                <video src="{{ file.url }}" class="w-full h-full object-cover" controls preload="metadata"></video>
-
-            {# 4. Fallback for others #}
-            {% else %}
-                <div class="text-center">
-                    <span class="text-5xl">📄</span>
-                    <p class="text-xs mt-2 text-gray-500 font-mono uppercase">{{ ext }}</p>
-                </div>
-            {% endif %}
-        </div>
-
-        <div class="mt-3">
-            <p class="font-bold text-gray-800 text-sm truncate mb-2" title="{{ file.filename }}">
-                {{ file.filename }}
-            </p>
-
-            <div class="flex gap-2">
-                <!-- Download Button -->
-                <a href="{{ file.url }}" download="{{ file.filename }}"
-                    class="flex-1 bg-blue-50 text-blue-600 px-3 py-2 rounded hover:bg-blue-600 hover:text-white transition duration-200 flex items-center justify-center gap-2 text-sm font-medium"
-                    title="Download {{ file.filename }}">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
-                    Download
-                </a>
-
-                <!-- View Button -->
-                <a href="{{ file.url }}" target="_blank"
-                    class="bg-green-50 text-green-600 p-2 rounded hover:bg-green-600 hover:text-white transition duration-200 flex items-center justify-center"
-                    title="View in new tab">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                </a>
-
-                <!-- Delete Button -->
-                <form action="{{ url_for('delete_file', file_id=file.id) }}" method="POST"
-                    onsubmit="return confirm('Are you sure you want to permanently delete this file?');">
-                    <button type="submit"
-                        class="bg-red-50 text-red-600 p-2 rounded hover:bg-red-600 hover:text-white transition duration-200"
-                        title="Delete File">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-    {% else %}
-    <div class="col-span-full text-center py-12 text-gray-500">
-        <p class="text-xl">No files uploaded yet.</p>
-        <p class="text-sm">Use the form above to add your first file.</p>
-    </div>
-    {% endfor %}
-</div>
-
 {% endblock %}

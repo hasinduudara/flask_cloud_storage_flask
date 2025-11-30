@@ -1,76 +1,115 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
-    <title>Cloud Storage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CloudBox</title>
     <script src="https://cdn.tailwindcss.com"></script>
-  </head>
-  <body class="bg-gray-100 min-h-screen">
-    <nav class="bg-white shadow p-4 mb-6">
-      <div class="container mx-auto flex justify-between items-center">
-        <a
-          href="{{ url_for('dashboard') }}"
-          class="text-xl font-bold text-blue-600"
-          >CloudBox</a
-        >
-        <div>
-          {% if current_user.is_authenticated %}
-          <span class="mr-4 text-gray-600"
-            >Hi, {{ current_user.username }}</span
-          >
-          <a
-            href="{{ url_for('logout') }}"
-            class="text-red-500 hover:text-red-700"
-            >Logout</a
-          >
-          {% else %}
-          <a
-            href="{{ url_for('login') }}"
-            class="mr-4 text-gray-600 hover:text-blue-500"
-            >Login</a
-          >
-          <a
-            href="{{ url_for('register') }}"
-            class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-            >Register</a
-          >
-          {% endif %}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        /* Smooth fade out animation */
+        .fade-out {
+            opacity: 0;
+            transform: translateX(100%);
+            transition: all 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col">
+
+    <nav class="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+
+                <a href="{{ url_for('dashboard') }}" class="flex items-center gap-2 group">
+                    <div class="bg-blue-600 text-white p-1.5 rounded-lg shadow-lg group-hover:scale-110 transition duration-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
+                        </svg>
+                    </div>
+                    <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-blue-500">
+                        CloudBox
+                    </span>
+                </a>
+
+                <div class="flex items-center gap-4">
+                    {% if current_user.is_authenticated %}
+                        <div class="hidden md:flex flex-col items-end mr-2">
+                            <span class="text-sm font-semibold text-slate-700">{{ current_user.username }}</span>
+                            <span class="text-xs text-slate-500">Free Plan</span>
+                        </div>
+                        <a href="{{ url_for('logout') }}"
+                           class="bg-red-600 hover:bg-red-700 text-white text-sm font-medium text-slate-500 rounded-lg shadow-md hover:shadow-lg transition duration-200 border border-transparent hover:border-red-100 px-3 py-1.5">
+                            Logout
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="text-slate-600 hover:text-blue-600 font-medium text-sm transition">Login</a>
+                        <a href="{{ url_for('register') }}"
+                           class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition transform hover:-translate-y-0.5">
+                            Get Started
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-      </div>
     </nav>
 
-    <div class="container mx-auto px-4">
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div
-        class="alert mb-4 p-4 rounded text-white relative {% if category=='success' %}bg-green-500{% elif category=='danger' %}bg-red-500{% else %}bg-blue-500{% endif %}"
-      >
-        <span class="block pr-8">{{ message }}</span>
-        <button
-          onclick="this.parentElement.remove()"
-          class="absolute top-2 right-2 text-white hover:text-gray-200 font-bold text-xl leading-none"
-          aria-label="Close"
-        >
-          &times;
-        </button>
-      </div>
-      {% endfor %} {% endif %} {% endwith %} {% block content %}{% endblock %}
+    <div class="fixed top-20 right-5 z-50 flex flex-col gap-3 w-full max-w-sm pointer-events-none">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="alert pointer-events-auto flex items-center p-4 mb-4 text-sm rounded-lg shadow-xl border border-gray-100 transform transition-all duration-300 translate-x-0
+                    {% if category=='success' %} bg-white text-green-800 border-l-4 border-l-green-500 {% elif category=='danger' %} bg-white text-red-800 border-l-4 border-l-red-500 {% else %} bg-white text-blue-800 border-l-4 border-l-blue-500 {% endif %}" role="alert">
+
+                    <div class="mr-3">
+                        {% if category=='success' %}
+                            <svg class="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>
+                        {% elif category=='danger' %}
+                            <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>
+                        {% else %}
+                            <svg class="w-5 h-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                        {% endif %}
+                    </div>
+
+                    <span class="font-medium flex-grow">{{ message }}</span>
+
+                    <button onclick="closeAlert(this.parentElement)" class="ml-4 -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8">
+                        <span class="sr-only">Close</span>
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                    </button>
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
     </div>
 
+    <main class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-white border-t border-slate-200 mt-auto">
+        <div class="max-w-7xl mx-auto py-6 px-4 flex flex-col md:flex-row justify-center items-center">
+            <p class="text-slate-700 text-sm">© 2025 CloudBox Storage. All rights reserved.</p>
+        </div>
+    </footer>
+
     <script>
-      // Auto-hide alerts after 5 seconds
-      document.addEventListener('DOMContentLoaded', function() {
-        const alerts = document.querySelectorAll('.alert');
-        alerts.forEach(function(alert) {
-          setTimeout(function() {
-            alert.style.transition = 'opacity 0.5s ease-out';
-            alert.style.opacity = '0';
-            setTimeout(function() {
-              alert.remove();
-            }, 500);
-          }, 5000); // 5 seconds
+        function closeAlert(element) {
+            element.classList.add('fade-out');
+            setTimeout(() => element.remove(), 500);
+        }
+
+        // Auto-hide alerts logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert, index) {
+                // Stagger the disappearance slightly if there are multiple
+                setTimeout(function() {
+                    closeAlert(alert);
+                }, 5000 + (index * 500));
+            });
         });
-      });
     </script>
-  </body>
+</body>
 </html>
